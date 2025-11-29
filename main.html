@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artomatique WAX - Maquette Technique PoC</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- FontAwesome for Icons (No SVG) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Chosen Palette: Warm Neutrals (Stone/Cream) with Amber Accents for the WAX/Crypto theme -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        wax: {
+                            50: '#fffbf0',
+                            100: '#ffefc2',
+                            500: '#f59e0b', // Amber-500 equivalent
+                            600: '#d97706',
+                            900: '#78350f',
+                        },
+                        stone: {
+                            50: '#fafaf9',
+                            800: '#292524',
+                            900: '#1c1917',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #fafaf9; /* stone-50 */
+            color: #292524; /* stone-800 */
+        }
+        
+        /* Chart Container Styling Rules */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px; /* Reduced max-width for cleaner dashboard look */
+            height: 300px;
+            max-height: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        /* Custom Scrollbar for inner content */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #d6d3d1; 
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #a8a29e; 
+        }
+
+        .step-card.active {
+            border-left: 4px solid #f59e0b;
+            background-color: #fffbf0;
+        }
+        
+        .step-card {
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+    </style>
+
+    <!-- Application Structure Plan: 
+         1. Hero Section: Clear value proposition of the PoC (Automation + Free Tools).
+         2. The Tech Stack (Grid): Interactive cards detailing the 4 free tools used (n8n, Mock, Pinata, WAX).
+         3. Rarity Logic (Dashboard): Interactive visualization of the drop rates (Chart.js) and a simulator to test the "1% Legendary" rule logic.
+         4. Workflow Engine (Timeline): A step-by-step interactive breakdown of the 6 n8n steps. Clicking a step updates the "Data Payload" view to show what JSON is moving through the system.
+         5. Live Simulation (The "Wow" Factor): A button to run a full "Pack Opening" simulation in the browser, mimicking the n8n logic, generating 5 mock cards, and calculating their rarity in real-time.
+    -->
+
+    <!-- Visualization & Content Choices:
+         - Rarity Distribution: Doughnut Chart (Chart.js). Goal: Inform. Shows the 89/10/1 split clearly.
+         - Tech Stack: Grid Layout with Icons. Goal: Organize. Breaks down the tools table.
+         - Workflow: Vertical Timeline with Clickable Steps. Goal: Change/Process. Allows user to walk through the n8n logic.
+         - Pack Simulator: Dynamic DOM generation + Bar Chart. Goal: Engage. Users can "Mint" packs and see the results, validating the "Business Model" of the pack logic.
+         - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+</head>
+<body class="font-sans antialiased selection:bg-wax-100 selection:text-wax-900">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-wax-500 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-stone-900">Artomatique<span class="text-wax-600">WAX</span></span>
+                </div>
+                <div class="hidden md:flex space-x-8 text-sm font-medium text-stone-600">
+                    <a href="#stack" class="hover:text-wax-600 transition-colors">Stack Technique</a>
+                    <a href="#rarity" class="hover:text-wax-600 transition-colors">Logique Rareté</a>
+                    <a href="#workflow" class="hover:text-wax-600 transition-colors">Workflow n8n</a>
+                    <a href="#simulation" class="px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 transition-colors shadow-sm">Lancer PoC</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative bg-stone-50 overflow-hidden">
+        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+        <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+            <div class="inline-block px-4 py-1.5 mb-6 text-xs font-semibold tracking-wider text-wax-900 uppercase bg-wax-100 rounded-full">
+                Preuve de Concept (PoC)
+            </div>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-stone-900 mb-6 leading-tight">
+                Production Automatisée de Packs NFT <br>sur <span class="text-wax-600">WAX Testnet</span>
+            </h1>
+            <p class="text-xl text-stone-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Une démonstration technique de l'orchestration complète : de la génération par prompt à la distribution de packs de 5 cartes, utilisant uniquement des outils gratuits.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button onclick="scrollToSection('workflow')" class="px-8 py-3.5 bg-white border border-stone-300 text-stone-700 font-semibold rounded-xl hover:bg-stone-50 transition-all shadow-sm flex items-center justify-center gap-2 group">
+                    <span>Explorer le Workflow</span>
+                    <i class="fa-solid fa-arrow-down group-hover:translate-y-1 transition-transform"></i>
+                </button>
+                <button onclick="scrollToSection('simulation')" class="px-8 py-3.5 bg-wax-500 text-white font-semibold rounded-xl hover:bg-wax-600 transition-all shadow-lg hover:shadow-wax-500/30 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play"></i>
+                    <span>Simuler le Minting</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 1: Stack Technique (Services Gratuits) -->
+    <section id="stack" class="py-16 bg-white border-b border-stone-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-12">
+                <h2 class="text-3xl font-bold text-stone-900 mb-4">Architecture & Outils Gratuits</h2>
+                <p class="text-stone-600 max-w-3xl">
+                    Ce PoC repose sur une sélection rigoureuse d'outils permettant de valider le concept sans coûts d'infrastructure initiaux. Chaque outil joue un rôle critique dans le pipeline automatisé.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Tool 1: n8n -->
+                <div class="p-6 bg-stone-50 rounded-2xl border border-stone-100 hover:border-wax-500/50 hover:shadow-md transition-all group">
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-network-wired text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-stone-900 mb-2">n8n (Cœur)</h3>
+                    <p class="text-sm text-stone-500 mb-3">Orchestrateur du flux</p>
+                    <p class="text-sm text-stone-600 leading-relaxed">
+                        Gère les déclencheurs Webhook, la logique conditionnelle et les boucles de production des cartes.
+                    </p>
+                </div>
+
+                <!-- Tool 2: Mock Data -->
+                <div class="p-6 bg-stone-50 rounded-2xl border border-stone-100 hover:border-wax-500/50 hover:shadow-md transition-all group">
+                    <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-stone-900 mb-2">Mock Data (IA)</h3>
+                    <p class="text-sm text-stone-500 mb-3">Simulation Générative</p>
+                    <p class="text-sm text-stone-600 leading-relaxed">
+                        Simule les réponses d'API IA coûteuses (DALL-E) pour valider la logique sans frais.
+                    </p>
+                </div>
+
+                <!-- Tool 3: Pinata -->
+                <div class="p-6 bg-stone-50 rounded-2xl border border-stone-100 hover:border-wax-500/50 hover:shadow-md transition-all group">
+                    <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-cube text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-stone-900 mb-2">Pinata (IPFS)</h3>
+                    <p class="text-sm text-stone-500 mb-3">Stockage Décentralisé</p>
+                    <p class="text-sm text-stone-600 leading-relaxed">
+                        Hébergement gratuit des assets visuels (images des cartes) pour obtenir les Hash IPFS.
+                    </p>
+                </div>
+
+                <!-- Tool 4: WAX Testnet -->
+                <div class="p-6 bg-stone-50 rounded-2xl border border-stone-100 hover:border-wax-500/50 hover:shadow-md transition-all group">
+                    <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-coins text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-stone-900 mb-2">WAX Testnet</h3>
+                    <p class="text-sm text-stone-500 mb-3">Blockchain & AtomicAssets</p>
+                    <p class="text-sm text-stone-600 leading-relaxed">
+                        Environnement de minting sans frais de gaz réels, idéal pour les tests de smart contracts.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Rarity Logic Dashboard -->
+    <section id="rarity" class="py-16 bg-stone-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+                <!-- Text Content -->
+                <div class="lg:col-span-1">
+                    <div class="inline-block px-3 py-1 mb-4 text-xs font-semibold text-wax-600 bg-wax-100 rounded-md">Gamification</div>
+                    <h2 class="text-3xl font-bold text-stone-900 mb-6">Logique de Rareté & Taux de Drop</h2>
+                    <p class="text-stone-600 mb-6 leading-relaxed">
+                        L'automatisation ne se contente pas de créer des images ; elle applique une logique algorithmique pour attribuer une valeur à chaque carte du pack. Cette logique est exécutée via un <strong>nœud Function JavaScript</strong> dans n8n.
+                    </p>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start">
+                            <span class="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-white text-xs mr-3 mt-1 shadow-sm"><i class="fa-solid fa-crown"></i></span>
+                            <div>
+                                <strong class="text-stone-900">Légendaire (1%)</strong>
+                                <p class="text-sm text-stone-500">Extrêmement rare, génère une excitation maximale.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center text-white text-xs mr-3 mt-1 shadow-sm"><i class="fa-solid fa-gem"></i></span>
+                            <div>
+                                <strong class="text-stone-900">Rare (10%)</strong>
+                                <p class="text-sm text-stone-500">Un bon tirage, souvent garanti dans les packs premium.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="w-6 h-6 bg-stone-400 rounded-full flex items-center justify-center text-white text-xs mr-3 mt-1 shadow-sm"><i class="fa-solid fa-circle"></i></span>
+                            <div>
+                                <strong class="text-stone-900">Commun (89%)</strong>
+                                <p class="text-sm text-stone-500">La base de la collection.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Visualization -->
+                <div class="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-stone-200">
+                    <div class="flex flex-col md:flex-row items-center justify-between mb-6">
+                        <h3 class="font-bold text-stone-800">Distribution Probabiliste</h3>
+                        <div class="text-sm text-stone-500">Modèle Pack 5 Cartes</div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="rarityChart"></canvas>
+                    </div>
+
+                    <div class="mt-8 p-4 bg-stone-50 rounded-xl border border-stone-100 text-center">
+                        <p class="text-sm text-stone-600">
+                            <i class="fa-solid fa-calculator mr-2 text-wax-600"></i>
+                            Calcul dynamique effectué par le code JavaScript du nœud n8n pour chaque carte générée.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: Workflow Engine -->
+    <section id="workflow" class="py-16 bg-white border-y border-stone-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-12 text-center">
+                <h2 class="text-3xl font-bold text-stone-900">Le Workflow n8n Détaillé</h2>
+                <p class="text-stone-500 mt-2">Cliquez sur les étapes pour visualiser le flux de données.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Left: Steps List -->
+                <div class="lg:col-span-5 space-y-3">
+                    <!-- Step 1 -->
+                    <div onclick="setStep(1)" id="step-btn-1" class="step-card active cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
+                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">1</div>
+                        <div>
+                            <h4 class="font-bold text-stone-900">Trigger (Webhook)</h4>
+                            <p class="text-xs text-stone-500">Réception du Prompt & Compte Cible</p>
+                        </div>
+                    </div>
+                    <!-- Step 2 -->
+                    <div onclick="setStep(2)" id="step-btn-2" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
+                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">2</div>
+                        <div>
+                            <h4 class="font-bold text-stone-900">Logique Pack & Rareté</h4>
+                            <p class="text-xs text-stone-500">Calcul JS des 5 cartes</p>
+                        </div>
+                    </div>
+                    <!-- Step 3 -->
+                    <div onclick="setStep(3)" id="step-btn-3" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
+                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">3</div>
+                        <div>
+                            <h4 class="font-bold text-stone-900">Mock Image Pack</h4>
+                            <p class="text-xs text-stone-500">Simulation IA & Hash IPFS</p>
+                        </div>
+                    </div>
+                    <!-- Step 4 -->
+                    <div onclick="setStep(4)" id="step-btn-4" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
+                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">4</div>
+                        <div>
+                            <h4 class="font-bold text-stone-900">Mint Pack NFT</h4>
+                            <p class="text-xs text-stone-500">Appel AtomicAssets (WAX)</p>
+                        </div>
+                    </div>
+                    <!-- Step 5 -->
+                    <div onclick="setStep(5)" id="step-btn-5" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
+                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">5</div>
+                        <div>
+                            <h4 class="font-bold text-stone-900">Boucle Mint Cartes (x5)</h4>
+                            <p class="text-xs text-stone-500">Split Batches -> Mint Individuel</p>
+                        </div>
+                    </div>
+                    <!-- Step 6 -->
+                    <div onclick="setStep(6)" id="step-btn-6" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
+                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">6</div>
+                        <div>
+                            <h4 class="font-bold text-stone-900">Distribution Finale</h4>
+                            <p class="text-xs text-stone-500">Transfert au portefeuille utilisateur</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Data Visualizer -->
+                <div class="lg:col-span-7">
+                    <div class="bg-stone-900 rounded-xl shadow-2xl overflow-hidden h-full flex flex-col">
+                        <div class="bg-stone-800 px-4 py-3 flex items-center justify-between border-b border-stone-700">
+                            <span class="text-stone-300 text-sm font-mono"><i class="fa-solid fa-code mr-2"></i>Payload Data Viewer</span>
+                            <span id="step-badge" class="px-2 py-0.5 rounded text-xs font-bold bg-wax-500 text-white">Étape 1</span>
+                        </div>
+                        <div class="p-6 overflow-y-auto custom-scroll flex-grow font-mono text-sm">
+                            <div id="data-display" class="space-y-2">
+                                <!-- Dynamic Content Injected via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Live Simulation -->
+    <section id="simulation" class="py-20 bg-stone-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <div class="inline-block px-3 py-1 mb-4 text-xs font-semibold text-green-600 bg-green-100 rounded-md">Démo Interactive</div>
+                <h2 class="text-3xl font-bold text-stone-900">Simulateur de Production n8n</h2>
+                <p class="text-stone-600 mt-4 max-w-2xl mx-auto">
+                    Testez la logique du PoC en temps réel. Cliquez sur le bouton pour déclencher le script JS qui imite le comportement du nœud "Function" de n8n pour générer un pack de 5 cartes.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-stone-200 overflow-hidden">
+                <!-- Control Panel -->
+                <div class="p-8 border-b border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-6 bg-stone-50/50">
+                    <div class="flex-1 w-full sm:w-auto">
+                        <label class="block text-xs font-bold text-stone-500 uppercase mb-2">Prompt Utilisateur</label>
+                        <input type="text" value="Cyberpunk Samurai Cat" readonly class="w-full bg-white border border-stone-300 rounded-lg px-4 py-2 text-stone-700 focus:outline-none focus:ring-2 focus:ring-wax-500">
+                    </div>
+                    <button onclick="runSimulation()" id="sim-btn" class="w-full sm:w-auto px-8 py-3 bg-wax-600 hover:bg-wax-500 text-white font-bold rounded-xl shadow-lg shadow-wax-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>Générer Pack (Mint)</span>
+                    </button>
+                </div>
+
+                <!-- Results Area -->
+                <div class="p-8 bg-stone-100/50 min-h-[300px]">
+                    <div id="loading-indicator" class="hidden flex flex-col items-center justify-center h-48">
+                        <div class="w-12 h-12 border-4 border-wax-200 border-t-wax-600 rounded-full animate-spin mb-4"></div>
+                        <p class="text-stone-500 animate-pulse">Orchestration n8n en cours...</p>
+                    </div>
+
+                    <div id="results-grid" class="hidden grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <!-- Cards injected here -->
+                    </div>
+
+                    <div id="empty-state" class="flex flex-col items-center justify-center h-48 text-stone-400">
+                        <i class="fa-solid fa-box-open text-4xl mb-3 opacity-50"></i>
+                        <p>En attente du déclencheur webhook...</p>
+                    </div>
+                </div>
+
+                <!-- Simulation Stats -->
+                <div class="p-6 bg-white border-t border-stone-200 flex justify-between items-center text-sm">
+                    <span class="text-stone-500"><i class="fa-solid fa-database mr-2"></i>Status WAX Testnet: <span class="text-green-600 font-semibold">Connecté (Simulé)</span></span>
+                    <span class="text-stone-500">Coût estimé: <span class="text-stone-900 font-bold">0.00 $</span> (Outils Gratuits)</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-stone-900 text-stone-400 py-12 border-t border-stone-800">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="mb-4 text-stone-100 font-semibold">Artomatique WAX PoC</p>
+            <p class="text-sm">Basé sur le plan de maquette technique pour l'automatisation n8n.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- State Management ---
+        const state = {
+            currentStep: 1,
+            rarityRates: { legendary: 0.01, rare: 0.11, common: 1.0 }, // Thresholds
+            simulationResults: []
+        };
+
+        // --- Data Content for Workflow Steps (JSON formatted strings) ---
+        const stepData = {
+            1: `<span class="text-green-400">// WEBHOOK POST RECEIVED</span>
+{
+  "body": {
+    "theme_prompt": "Alien Jungle Cyberpunk",
+    "target_wax_account": "user1.test",
+    "pack_qty": 1
+  },
+  "timestamp": "${new Date().toISOString()}"
+}`,
+            2: `<span class="text-blue-400">// FUNCTION: GENERATE RARITY LOGIC</span>
+[
+  {
+    "card_id": 1,
+    "rarity": "Common",
+    "prompt_mod": "Basic Alien Jungle..."
+  },
+  {
+    "card_id": 2,
+    "rarity": "Rare",
+    "prompt_mod": "Glowing Rare Alien..."
+  },
+  ... (3 more items)
+]
+<span class="text-stone-500">// Logic: Math.random() < 0.11 ? 'Rare' : 'Common'</span>`,
+            3: `<span class="text-purple-400">// MOCK DATA & PINATA</span>
+{
+  "pack_cover_ipfs": "QmXyZ...",
+  "status": "ready_to_mint",
+  "mock_delay": "0ms"
+}`,
+            4: `<span class="text-yellow-400">// HTTP REQUEST: WAX MINT PACK</span>
+POST /v1/chain/push_transaction
+{
+  "actions": [{
+    "account": "atomicassets",
+    "name": "mintasset",
+    "data": {
+      "owner": "collection.owner",
+      "schema_name": "packs",
+      "immutable_data": {
+         "name": "Cyber Pack #402",
+         "img": "QmXyZ..."
+      }
+    }
+  }]
+}`,
+            5: `<span class="text-orange-400">// LOOP: MINT 5 CARDS</span>
+Iteration 1/5: Minting Common... [OK]
+Iteration 2/5: Minting Common... [OK]
+Iteration 3/5: Minting Rare...   [OK]
+Iteration 4/5: Minting Common... [OK]
+Iteration 5/5: Minting Common... [OK]`,
+            6: `<span class="text-green-400">// FINAL TRANSFER</span>
+Transaction ID: 8a7f...3b1
+Status: COMPLETED
+To: user1.test
+Assets: [Pack#402, Card#101, Card#102...]`
+        };
+
+        // --- Init Functions ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderChart();
+            setStep(1);
+        });
+
+        // --- Workflow Interaction ---
+        function setStep(step) {
+            // Update UI State
+            document.querySelectorAll('.step-card').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step-btn-${step}`).classList.add('active');
+            
+            // Update Data Display
+            const display = document.getElementById('data-display');
+            display.innerHTML = stepData[step];
+            display.classList.add('animate-pulse');
+            setTimeout(() => display.classList.remove('animate-pulse'), 300);
+
+            // Update Badge
+            const badge = document.getElementById('step-badge');
+            badge.innerText = `Étape ${step}`;
+            
+            // Color coding for badge based on step type
+            const colors = ['bg-stone-500', 'bg-blue-500', 'bg-purple-500', 'bg-yellow-500', 'bg-orange-500', 'bg-green-500'];
+            badge.className = `px-2 py-0.5 rounded text-xs font-bold text-white ${colors[step-1]}`;
+        }
+
+        // --- Chart.js Implementation ---
+        function renderChart() {
+            const ctx = document.getElementById('rarityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Commun (89%)', 'Rare (10%)', 'Légendaire (1%)'],
+                    datasets: [{
+                        data: [89, 10, 1],
+                        backgroundColor: [
+                            '#a8a29e', // stone-400
+                            '#60a5fa', // blue-400
+                            '#facc15'  // yellow-400
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                font: { family: 'Inter', size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        // --- Simulation Logic (The "Wow" Factor) ---
+        function runSimulation() {
+            const btn = document.getElementById('sim-btn');
+            const loader = document.getElementById('loading-indicator');
+            const results = document.getElementById('results-grid');
+            const empty = document.getElementById('empty-state');
+
+            // Reset UI
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            empty.classList.add('hidden');
+            results.classList.add('hidden');
+            loader.classList.remove('hidden');
+
+            // Simulate Network Delay (1.5s)
+            setTimeout(() => {
+                const pulledCards = [];
+                // Generate 5 cards based on rarity logic
+                for (let i = 0; i < 5; i++) {
+                    const rand = Math.random();
+                    let type = 'Commun';
+                    let color = 'bg-stone-200 text-stone-600 border-stone-300';
+                    let icon = 'fa-circle';
+
+                    if (rand < 0.01) {
+                        type = 'Légendaire';
+                        color = 'bg-yellow-100 text-yellow-700 border-yellow-400';
+                        icon = 'fa-crown';
+                    } else if (rand < 0.11) {
+                        type = 'Rare';
+                        color = 'bg-blue-100 text-blue-700 border-blue-400';
+                        icon = 'fa-gem';
+                    }
+
+                    pulledCards.push({ type, color, icon, id: 1000 + Math.floor(Math.random() * 9000) });
+                }
+
+                // Render Results
+                results.innerHTML = '';
+                pulledCards.forEach((card, index) => {
+                    const html = `
+                        <div class="animate-fadeInUp" style="animation-delay: ${index * 100}ms">
+                            <div class="h-40 rounded-xl border-2 ${card.color} flex flex-col items-center justify-center p-2 relative overflow-hidden shadow-sm transition-transform hover:scale-105">
+                                <i class="fa-solid ${card.icon} text-3xl mb-2"></i>
+                                <span class="font-bold text-sm">${card.type}</span>
+                                <span class="text-xs opacity-75">#${card.id}</span>
+                                <div class="absolute bottom-0 left-0 w-full h-1 bg-current opacity-20"></div>
+                            </div>
+                        </div>
+                    `;
+                    results.insertAdjacentHTML('beforeend', html);
+                });
+
+                loader.classList.add('hidden');
+                results.classList.remove('hidden');
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                
+            }, 1500);
+        }
+
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+
+    <!-- Tailwind Custom Animation -->
+    <style>
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeInUp {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+    </style>
+</body>
+</html>

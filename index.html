@@ -446,12 +446,26 @@
     "rarity": "Rare",
     "prompt_mod": "Glowing Rare Alien..."
   },
-  ... (3 more items)
+  {
+    "card_id": 3,
+    "rarity": "Common",
+    "prompt_mod": "Standard Alien Plant..."
+  },
+  {
+    "card_id": 4,
+    "rarity": "Common",
+    "prompt_mod": "Grungy Cyberpunk Structure..."
+  },
+  {
+    "card_id": 5,
+    "rarity": "Common",
+    "prompt_mod": "Standard Alien Creature..."
+  }
 ]
 <span class="text-stone-500">// Logic: Math.random() < 0.11 ? 'Rare' : 'Common'</span>`,
             3: `<span class="text-purple-400">// MOCK DATA & PINATA</span>
 {
-  "pack_cover_ipfs": "QmXyZ...",
+  "pack_cover_ipfs": "QmXyZ789aBcDeF1234567890fGhIjKlMnOpQrStUvWxYzA1234567890",
   "status": "ready_to_mint",
   "mock_delay": "0ms"
 }`,
@@ -466,7 +480,7 @@ POST /v1/chain/push_transaction
       "schema_name": "packs",
       "immutable_data": {
          "name": "Cyber Pack #402",
-         "img": "QmXyZ..."
+         "img": "QmXyZ789aBc..."
       }
     }
   }]
@@ -481,7 +495,7 @@ Iteration 5/5: Minting Common... [OK]`,
 Transaction ID: 8a7f...3b1
 Status: COMPLETED
 To: user1.test
-Assets: [Pack#402, Card#101, Card#102...]`
+Assets: [Pack#402, Card#101, Card#102, Card#103, Card#104, Card#105]`
         };
 
         // --- Init Functions ---

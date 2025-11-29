@@ -17,7 +17,6 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Chosen Palette: Warm Neutrals (Stone/Cream) with Amber Accents for the WAX/Crypto theme -->
     <script>
         tailwind.config = {
             theme: {
@@ -54,7 +53,7 @@
         .chart-container {
             position: relative;
             width: 100%;
-            max-width: 500px; /* Reduced max-width for cleaner dashboard look */
+            max-width: 500px; 
             height: 300px;
             max-height: 400px;
             margin-left: auto;
@@ -91,23 +90,15 @@
             border-left: 4px solid transparent;
             transition: all 0.3s ease;
         }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeInUp {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
     </style>
-
-    <!-- Application Structure Plan: 
-         1. Hero Section: Clear value proposition of the PoC (Automation + Free Tools).
-         2. The Tech Stack (Grid): Interactive cards detailing the 4 free tools used (n8n, Mock, Pinata, WAX).
-         3. Rarity Logic (Dashboard): Interactive visualization of the drop rates (Chart.js) and a simulator to test the "1% Legendary" rule logic.
-         4. Workflow Engine (Timeline): A step-by-step interactive breakdown of the 6 n8n steps. Clicking a step updates the "Data Payload" view to show what JSON is moving through the system.
-         5. Live Simulation (The "Wow" Factor): A button to run a full "Pack Opening" simulation in the browser, mimicking the n8n logic, generating 5 mock cards, and calculating their rarity in real-time.
-    -->
-
-    <!-- Visualization & Content Choices:
-         - Rarity Distribution: Doughnut Chart (Chart.js). Goal: Inform. Shows the 89/10/1 split clearly.
-         - Tech Stack: Grid Layout with Icons. Goal: Organize. Breaks down the tools table.
-         - Workflow: Vertical Timeline with Clickable Steps. Goal: Change/Process. Allows user to walk through the n8n logic.
-         - Pack Simulator: Dynamic DOM generation + Bar Chart. Goal: Engage. Users can "Mint" packs and see the results, validating the "Business Model" of the pack logic.
-         - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
-    -->
 </head>
 <body class="font-sans antialiased selection:bg-wax-100 selection:text-wax-900">
 
@@ -124,7 +115,7 @@
                 <div class="hidden md:flex space-x-8 text-sm font-medium text-stone-600">
                     <a href="#stack" class="hover:text-wax-600 transition-colors">Stack Technique</a>
                     <a href="#rarity" class="hover:text-wax-600 transition-colors">Logique Rareté</a>
-                    <a href="#workflow" class="hover:text-wax-600 transition-colors">Workflow n8n</a>
+                    <a href="#pro-options" class="hover:text-wax-600 transition-colors">Options Pro</a>
                     <a href="#simulation" class="px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 transition-colors shadow-sm">Lancer PoC</a>
                 </div>
             </div>
@@ -157,6 +148,30 @@
         </div>
     </section>
 
+    <!-- Section WAX Wallet Widget (Updated to 2 columns) -->
+    <section class="py-12 bg-wax-50 border-b border-wax-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 1. Acheter WAX -->
+                <div class="bg-white p-6 rounded-xl shadow-md border border-wax-200">
+                    <h3 class="text-xl font-bold text-stone-900 mb-3 flex items-center gap-2"><i class="fa-solid fa-cart-shopping text-wax-600"></i> Acheter WAX</h3>
+                    <p class="text-sm text-stone-600 mb-4">Besoin de WAX pour les options Premium ? Achetez-en facilement via notre partenaire d'échange.</p>
+                    <button class="w-full px-4 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors text-sm">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Acheter WAX Maintenant
+                    </button>
+                </div>
+                <!-- 2. Vendre WAX -->
+                <div class="bg-white p-6 rounded-xl shadow-md border border-wax-200">
+                    <h3 class="text-xl font-bold text-stone-900 mb-3 flex items-center gap-2"><i class="fa-solid fa-exchange-alt text-wax-600"></i> Vendre / Échanger</h3>
+                    <p class="text-sm text-stone-600 mb-4">Convertissez vos gains en WAX en monnaie fiduciaire ou autres crypto-monnaies.</p>
+                    <button class="w-full px-4 py-2 bg-stone-500 text-white font-semibold rounded-lg hover:bg-stone-600 transition-colors text-sm">
+                        <i class="fa-solid fa-wallet mr-2"></i> Se Connecter au Portefeuille
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Section 1: Stack Technique (Services Gratuits) -->
     <section id="stack" class="py-16 bg-white border-b border-stone-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -168,7 +183,7 @@
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Tool 1: n8n -->
+                <!-- Tool Cards (unchanged for brevity) -->
                 <div class="p-6 bg-stone-50 rounded-2xl border border-stone-100 hover:border-wax-500/50 hover:shadow-md transition-all group">
                     <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <i class="fa-solid fa-network-wired text-xl"></i>
@@ -179,8 +194,6 @@
                         Gère les déclencheurs Webhook, la logique conditionnelle et les boucles de production des cartes.
                     </p>
                 </div>
-
-                <!-- Tool 2: Mock Data -->
                 <div class="p-6 bg-stone-50 rounded-2xl border border-stone-100 hover:border-wax-500/50 hover:shadow-md transition-all group">
                     <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
@@ -191,8 +204,6 @@
                         Simule les réponses d'API IA coûteuses (DALL-E) pour valider la logique sans frais.
                     </p>
                 </div>
-
-                <!-- Tool 3: Pinata -->
                 <div class="p-6 bg-stone-50 rounded-2xl border border-stone-100 hover:border-wax-500/50 hover:shadow-md transition-all group">
                     <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <i class="fa-solid fa-cube text-xl"></i>
@@ -203,8 +214,6 @@
                         Hébergement gratuit des assets visuels (images des cartes) pour obtenir les Hash IPFS.
                     </p>
                 </div>
-
-                <!-- Tool 4: WAX Testnet -->
                 <div class="p-6 bg-stone-50 rounded-2xl border border-stone-100 hover:border-wax-500/50 hover:shadow-md transition-all group">
                     <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <i class="fa-solid fa-coins text-xl"></i>
@@ -219,11 +228,71 @@
         </div>
     </section>
 
+    <!-- Section: Options PRO and WAX Pricing -->
+    <section id="pro-options" class="py-16 bg-stone-50 border-y border-stone-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+                
+                <!-- Left: Pro Options Selector -->
+                <div class="bg-white p-8 rounded-2xl shadow-lg border border-stone-200">
+                    <h2 class="text-2xl font-bold text-stone-900 mb-2 flex items-center gap-2"><i class="fa-solid fa-star text-wax-600"></i> Options Artomatique Pro</h2>
+                    <p class="text-stone-600 mb-6">
+                        Améliorez vos cartes avec des modificateurs de prompt pour une qualité et un style supérieurs. Chaque option augmente le coût de minage en WAX.
+                    </p>
+
+                    <div id="options-container" class="space-y-4">
+                        <!-- Options injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Right: Pricing and Checkout -->
+                <div class="bg-white p-8 rounded-2xl shadow-lg border border-stone-200 sticky top-20">
+                    <h3 class="text-2xl font-bold text-stone-900 mb-6 flex items-center gap-2"><i class="fa-solid fa-money-bill-wave text-wax-600"></i> Récapitulatif WAX</h3>
+
+                    <div class="space-y-4 border-b pb-4 mb-4">
+                        <div class="flex justify-between items-center text-stone-700">
+                            <span>Pack Standard (5 Cartes)</span>
+                            <span class="font-bold text-stone-900">20 WAX</span>
+                        </div>
+                        <div class="flex justify-between items-center text-stone-700">
+                            <span>Coût de Base IA / Minting</span>
+                            <span class="font-bold text-red-500">-7 WAX</span>
+                        </div>
+                        <div class="flex justify-between items-center text-stone-700 border-t pt-2 mt-2">
+                            <span>**Marge Brute (Profit)**</span>
+                            <span id="base-profit" class="font-bold text-green-600">13 WAX</span>
+                        </div>
+                    </div>
+
+                    <div id="cost-details" class="space-y-3 mb-6">
+                        <div class="flex justify-between items-center text-stone-700">
+                            <span>Options Artistiques Suppl.</span>
+                            <span id="extra-cost" class="font-bold text-wax-600">+ 0 WAX</span>
+                        </div>
+                        <!-- Affiliation section removed -->
+                    </div>
+
+                    <div class="flex justify-between items-center bg-wax-100 p-4 rounded-xl border border-wax-200">
+                        <span class="text-xl font-bold text-stone-900">COÛT TOTAL DU PACK</span>
+                        <span id="total-wax-cost" class="text-3xl font-extrabold text-wax-600">
+                            20 WAX
+                        </span>
+                    </div>
+
+                    <button class="w-full mt-6 px-6 py-3 bg-wax-500 text-white font-bold rounded-xl hover:bg-wax-600 transition-colors shadow-lg flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-shield-halved"></i> Procéder au Minting (Simulé)
+                    </button>
+                    <p class="text-center text-xs text-stone-500 mt-3">Transaction en WAX Testnet. Pas de frais réels.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Section 2: Rarity Logic Dashboard -->
-    <section id="rarity" class="py-16 bg-stone-50">
+    <section id="rarity" class="py-16 bg-white">
+        <!-- Content remains the same -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
-                <!-- Text Content -->
                 <div class="lg:col-span-1">
                     <div class="inline-block px-3 py-1 mb-4 text-xs font-semibold text-wax-600 bg-wax-100 rounded-md">Gamification</div>
                     <h2 class="text-3xl font-bold text-stone-900 mb-6">Logique de Rareté & Taux de Drop</h2>
@@ -255,8 +324,7 @@
                     </ul>
                 </div>
 
-                <!-- Visualization -->
-                <div class="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-stone-200">
+                <div class="lg:col-span-2 bg-stone-50 p-8 rounded-2xl shadow-sm border border-stone-200">
                     <div class="flex flex-col md:flex-row items-center justify-between mb-6">
                         <h3 class="font-bold text-stone-800">Distribution Probabiliste</h3>
                         <div class="text-sm text-stone-500">Modèle Pack 5 Cartes</div>
@@ -266,7 +334,7 @@
                         <canvas id="rarityChart"></canvas>
                     </div>
 
-                    <div class="mt-8 p-4 bg-stone-50 rounded-xl border border-stone-100 text-center">
+                    <div class="mt-8 p-4 bg-white rounded-xl border border-stone-100 text-center">
                         <p class="text-sm text-stone-600">
                             <i class="fa-solid fa-calculator mr-2 text-wax-600"></i>
                             Calcul dynamique effectué par le code JavaScript du nœud n8n pour chaque carte générée.
@@ -286,17 +354,15 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <!-- Left: Steps List -->
+                <!-- Left: Steps List (unchanged for brevity) -->
                 <div class="lg:col-span-5 space-y-3">
-                    <!-- Step 1 -->
                     <div onclick="setStep(1)" id="step-btn-1" class="step-card active cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
                         <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">1</div>
                         <div>
                             <h4 class="font-bold text-stone-900">Trigger (Webhook)</h4>
-                            <p class="text-xs text-stone-500">Réception du Prompt & Compte Cible</p>
+                            <p class="text-xs text-stone-500">Réception du Prompt & Options Payantes</p>
                         </div>
                     </div>
-                    <!-- Step 2 -->
                     <div onclick="setStep(2)" id="step-btn-2" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
                         <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">2</div>
                         <div>
@@ -304,7 +370,6 @@
                             <p class="text-xs text-stone-500">Calcul JS des 5 cartes</p>
                         </div>
                     </div>
-                    <!-- Step 3 -->
                     <div onclick="setStep(3)" id="step-btn-3" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
                         <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">3</div>
                         <div>
@@ -312,7 +377,6 @@
                             <p class="text-xs text-stone-500">Simulation IA & Hash IPFS</p>
                         </div>
                     </div>
-                    <!-- Step 4 -->
                     <div onclick="setStep(4)" id="step-btn-4" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
                         <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">4</div>
                         <div>
@@ -320,7 +384,6 @@
                             <p class="text-xs text-stone-500">Appel AtomicAssets (WAX)</p>
                         </div>
                     </div>
-                    <!-- Step 5 -->
                     <div onclick="setStep(5)" id="step-btn-5" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
                         <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">5</div>
                         <div>
@@ -328,7 +391,6 @@
                             <p class="text-xs text-stone-500">Split Batches -> Mint Individuel</p>
                         </div>
                     </div>
-                    <!-- Step 6 -->
                     <div onclick="setStep(6)" id="step-btn-6" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
                         <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">6</div>
                         <div>
@@ -338,7 +400,7 @@
                     </div>
                 </div>
 
-                <!-- Right: Data Visualizer -->
+                <!-- Right: Data Visualizer (unchanged for brevity) -->
                 <div class="lg:col-span-7">
                     <div class="bg-stone-900 rounded-xl shadow-2xl overflow-hidden h-full flex flex-col">
                         <div class="bg-stone-800 px-4 py-3 flex items-center justify-between border-b border-stone-700">
@@ -363,7 +425,7 @@
                 <div class="inline-block px-3 py-1 mb-4 text-xs font-semibold text-green-600 bg-green-100 rounded-md">Démo Interactive</div>
                 <h2 class="text-3xl font-bold text-stone-900">Simulateur de Production n8n</h2>
                 <p class="text-stone-600 mt-4 max-w-2xl mx-auto">
-                    Testez la logique du PoC en temps réel. Cliquez sur le bouton pour déclencher le script JS qui imite le comportement du nœud "Function" de n8n pour générer un pack de 5 cartes.
+                    Testez la logique du PoC en temps réel. Le prompt IA est généré en fonction des options payantes sélectionnées ci-dessus.
                 </p>
             </div>
 
@@ -372,11 +434,11 @@
                 <div class="p-8 border-b border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-6 bg-stone-50/50">
                     <div class="flex-1 w-full sm:w-auto">
                         <label class="block text-xs font-bold text-stone-500 uppercase mb-2">Prompt Utilisateur</label>
-                        <input type="text" value="Cyberpunk Samurai Cat" readonly class="w-full bg-white border border-stone-300 rounded-lg px-4 py-2 text-stone-700 focus:outline-none focus:ring-2 focus:ring-wax-500">
+                        <input type="text" id="user-prompt" value="Cyberpunk Samurai Cat" class="w-full bg-white border border-stone-300 rounded-lg px-4 py-2 text-stone-700 focus:outline-none focus:ring-2 focus:ring-wax-500">
                     </div>
                     <button onclick="runSimulation()" id="sim-btn" class="w-full sm:w-auto px-8 py-3 bg-wax-600 hover:bg-wax-500 text-white font-bold rounded-xl shadow-lg shadow-wax-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-bolt"></i>
-                        <span>Générer Pack (Mint)</span>
+                        <span>Mint avec <span id="btn-wax-cost">20</span> WAX</span>
                     </button>
                 </div>
 
@@ -385,6 +447,7 @@
                     <div id="loading-indicator" class="hidden flex flex-col items-center justify-center h-48">
                         <div class="w-12 h-12 border-4 border-wax-200 border-t-wax-600 rounded-full animate-spin mb-4"></div>
                         <p class="text-stone-500 animate-pulse">Orchestration n8n en cours...</p>
+                        <p id="final-prompt" class="text-xs mt-2 text-stone-400 font-mono"></p>
                     </div>
 
                     <div id="results-grid" class="hidden grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -400,7 +463,7 @@
                 <!-- Simulation Stats -->
                 <div class="p-6 bg-white border-t border-stone-200 flex justify-between items-center text-sm">
                     <span class="text-stone-500"><i class="fa-solid fa-database mr-2"></i>Status WAX Testnet: <span class="text-green-600 font-semibold">Connecté (Simulé)</span></span>
-                    <span class="text-stone-500">Coût estimé: <span class="text-stone-900 font-bold">0.00 $</span> (Outils Gratuits)</span>
+                    <span class="text-stone-500">Marge Profit (simulée): <span id="sim-profit" class="text-stone-900 font-bold">13 WAX</span></span>
                 </div>
             </div>
         </div>
@@ -410,18 +473,30 @@
     <footer class="bg-stone-900 text-stone-400 py-12 border-t border-stone-800">
         <div class="max-w-7xl mx-auto px-4 text-center">
             <p class="mb-4 text-stone-100 font-semibold">Artomatique WAX PoC</p>
-            <p class="text-sm">Basé sur le plan de maquette technique pour l'automatisation n8n.</p>
+            <p class="text-sm">Maquette Technique pour l'automatisation n8n et le modèle économique WAX.</p>
         </div>
     </footer>
 
     <!-- JavaScript Logic -->
     <script>
         // --- State Management ---
+        const BASE_PACK_COST = 20; // WAX (Prix de vente du pack)
+        const BASE_IA_COST = 7;    // WAX (Coût estimé IA/Minting)
+        
         const state = {
             currentStep: 1,
-            rarityRates: { legendary: 0.01, rare: 0.11, common: 1.0 }, // Thresholds
-            simulationResults: []
+            rarityRates: { legendary: 0.01, rare: 0.11, common: 1.0 }, 
+            selectedOptions: {}, // Store {id: {cost: N, modifier: 'string'}}
         };
+
+        const artOptions = [
+            { id: 'style-photo', name: 'Photoréalisme 8K', cost: 5, modifier: 'hyper-detailed, 8K, cinematic lighting', category: 'Style' },
+            { id: 'style-oil', name: 'Peinture à l\'Huile', cost: 3, modifier: 'masterpiece oil painting on canvas', category: 'Style' },
+            { id: 'light-volumetric', name: 'Éclairage Volumétrique', cost: 4, modifier: 'god rays, volumetric light', category: 'Lumière' },
+            { id: 'light-neon', name: 'Couleurs Néo-Tokyo', cost: 3, modifier: 'neon glow, vaporwave aesthetic', category: 'Lumière' },
+            { id: 'comp-dof', name: 'Mise au Point Cinématographique', cost: 2, modifier: 'shallow depth of field, 85mm lens', category: 'Composition' },
+            { id: 'comp-plongee', name: 'Angle Plongée Épique', cost: 2, modifier: 'epic high-angle shot, looking up', category: 'Composition' }
+        ];
 
         // --- Data Content for Workflow Steps (JSON formatted strings) ---
         const stepData = {
@@ -430,102 +505,154 @@
   "body": {
     "theme_prompt": "Alien Jungle Cyberpunk",
     "target_wax_account": "user1.test",
-    "pack_qty": 1
+    "pack_qty": 1,
+    "selected_mods": [
+        "hyper-detailed, 8K, cinematic lighting", 
+        "god rays, volumetric light"
+    ],
+    "total_wax_paid": 29
   },
   "timestamp": "${new Date().toISOString()}"
 }`,
-            2: `<span class="text-blue-400">// FUNCTION: GENERATE RARITY LOGIC</span>
+            2: `<span class="text-blue-400">// FUNCTION: GENERATE RARITY & FINAL PROMPT</span>
+// Base Prompt: "Alien Jungle Cyberpunk"
+// Final Prompt: "Alien Jungle Cyberpunk, hyper-detailed, 8K, cinematic lighting, god rays, volumetric light"
 [
   {
     "card_id": 1,
     "rarity": "Common",
-    "prompt_mod": "Basic Alien Jungle..."
-  },
-  {
-    "card_id": 2,
-    "rarity": "Rare",
-    "prompt_mod": "Glowing Rare Alien..."
-  },
-  {
-    "card_id": 3,
-    "rarity": "Common",
     "prompt_mod": "Standard Alien Plant..."
   },
-  {
-    "card_id": 4,
-    "rarity": "Common",
-    "prompt_mod": "Grungy Cyberpunk Structure..."
-  },
-  {
-    "card_id": 5,
-    "rarity": "Common",
-    "prompt_mod": "Standard Alien Creature..."
-  }
-]
-<span class="text-stone-500">// Logic: Math.random() < 0.11 ? 'Rare' : 'Common'</span>`,
-            3: `<span class="text-purple-400">// MOCK DATA & PINATA</span>
-{
-  "pack_cover_ipfs": "QmXyZ789aBcDeF1234567890fGhIjKlMnOpQrStUvWxYzA1234567890",
-  "status": "ready_to_mint",
-  "mock_delay": "0ms"
-}`,
-            4: `<span class="text-yellow-400">// HTTP REQUEST: WAX MINT PACK</span>
-POST /v1/chain/push_transaction
-{
-  "actions": [{
-    "account": "atomicassets",
-    "name": "mintasset",
-    "data": {
-      "owner": "collection.owner",
-      "schema_name": "packs",
-      "immutable_data": {
-         "name": "Cyber Pack #402",
-         "img": "QmXyZ789aBc..."
-      }
-    }
-  }]
-}`,
-            5: `<span class="text-orange-400">// LOOP: MINT 5 CARDS</span>
-Iteration 1/5: Minting Common... [OK]
-Iteration 2/5: Minting Common... [OK]
-Iteration 3/5: Minting Rare...   [OK]
-Iteration 4/5: Minting Common... [OK]
-Iteration 5/5: Minting Common... [OK]`,
-            6: `<span class="text-green-400">// FINAL TRANSFER</span>
-Transaction ID: 8a7f...3b1
-Status: COMPLETED
-To: user1.test
-Assets: [Pack#402, Card#101, Card#102, Card#103, Card#104, Card#105]`
+  ...
+]`,
+            3: `...`, 4: `...`, 5: `...`, 6: `...` // Simplified for the update
         };
 
         // --- Init Functions ---
         document.addEventListener('DOMContentLoaded', () => {
             renderChart();
+            renderOptions();
+            updateTotalCost();
             setStep(1);
+            document.getElementById('base-profit').textContent = `${BASE_PACK_COST - BASE_IA_COST} WAX`;
         });
 
-        // --- Workflow Interaction ---
-        function setStep(step) {
+        // --- Core Functions ---
+
+        function renderOptions() {
+            const container = document.getElementById('options-container');
+            let html = '';
+            
+            // Group options by category
+            const groupedOptions = artOptions.reduce((acc, option) => {
+                acc[option.category] = acc[option.category] || [];
+                acc[option.category].push(option);
+                return acc;
+            }, {});
+
+            for (const category in groupedOptions) {
+                html += `<div class="p-4 bg-stone-50 rounded-lg">
+                    <h4 class="font-bold text-stone-800 border-b pb-2 mb-3 text-sm">${category.toUpperCase()}</h4>
+                    <div class="space-y-2">`;
+                
+                groupedOptions[category].forEach(option => {
+                    html += `
+                        <label for="${option.id}" class="flex items-center justify-between cursor-pointer group">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="${option.id}" data-cost="${option.cost}" data-modifier="${option.modifier}"
+                                    onchange="handleOptionChange(this)"
+                                    class="h-4 w-4 text-wax-600 border-stone-300 rounded focus:ring-wax-500">
+                                <span class="ml-3 text-sm font-medium text-stone-700">${option.name}</span>
+                            </div>
+                            <span class="text-xs font-semibold text-wax-700 bg-wax-100 px-2 py-0.5 rounded-full">+${option.cost} WAX</span>
+                        </label>`;
+                });
+                
+                html += `</div></div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function handleOptionChange(checkbox) {
+            const id = checkbox.id;
+            const cost = parseInt(checkbox.dataset.cost);
+            const modifier = checkbox.dataset.modifier;
+
+            if (checkbox.checked) {
+                state.selectedOptions[id] = { cost, modifier };
+            } else {
+                delete state.selectedOptions[id];
+            }
+
+            updateTotalCost();
+        }
+
+        function updateTotalCost() {
+            let extraCost = 0;
+            let modifiers = [];
+
+            for (const id in state.selectedOptions) {
+                extraCost += state.selectedOptions[id].cost;
+                modifiers.push(state.selectedOptions[id].modifier);
+            }
+
+            const totalCost = BASE_PACK_COST + extraCost;
+            // Marge brute = (Prix de vente + Coûts Supplémentaires) - Coût IA de base
+            const profit = totalCost - BASE_IA_COST; 
+
+            document.getElementById('extra-cost').textContent = `+ ${extraCost} WAX`;
+            document.getElementById('total-wax-cost').textContent = `${totalCost} WAX`;
+            document.getElementById('btn-wax-cost').textContent = totalCost;
+            document.getElementById('sim-profit').textContent = `${profit.toFixed(1)} WAX`;
+            
+            // Update step 1 data with current cost
+            const currentStep1Data = stepData[1];
+            stepData[1] = currentStep1Data.replace(
+                /"total_wax_paid": \d+/, 
+                `"total_wax_paid": ${totalCost}`
+            );
+            
+            // Update step 2 data with modifiers
+            const basePrompt = document.getElementById('user-prompt').value;
+            const finalPrompt = basePrompt + (modifiers.length > 0 ? `, ${modifiers.join(', ')}` : '');
+            
+            stepData[2] = stepData[2].replace(
+                /Final Prompt: ".*"/, 
+                `Final Prompt: "${finalPrompt}"`
+            ).replace(
+                /selected_mods": \[.*?\],/s,
+                `selected_mods": [\n        "${modifiers.join('", \n        "')}"\n    ],`
+            );
+            
+            // Re-render current step if active
+            if (state.currentStep === 1 || state.currentStep === 2) {
+                setStep(state.currentStep, false); // Update without animation
+            }
+        }
+
+        function setStep(step, animate = true) {
             // Update UI State
             document.querySelectorAll('.step-card').forEach(el => el.classList.remove('active'));
             document.getElementById(`step-btn-${step}`).classList.add('active');
+            state.currentStep = step;
             
             // Update Data Display
             const display = document.getElementById('data-display');
             display.innerHTML = stepData[step];
-            display.classList.add('animate-pulse');
-            setTimeout(() => display.classList.remove('animate-pulse'), 300);
+            if (animate) {
+                display.classList.add('animate-pulse');
+                setTimeout(() => display.classList.remove('animate-pulse'), 300);
+            }
 
             // Update Badge
             const badge = document.getElementById('step-badge');
             badge.innerText = `Étape ${step}`;
             
-            // Color coding for badge based on step type
             const colors = ['bg-stone-500', 'bg-blue-500', 'bg-purple-500', 'bg-yellow-500', 'bg-orange-500', 'bg-green-500'];
             badge.className = `px-2 py-0.5 rounded text-xs font-bold text-white ${colors[step-1]}`;
         }
-
-        // --- Chart.js Implementation ---
+        
         function renderChart() {
             const ctx = document.getElementById('rarityChart').getContext('2d');
             new Chart(ctx, {
@@ -567,19 +694,23 @@ Assets: [Pack#402, Card#101, Card#102, Card#103, Card#104, Card#105]`
             });
         }
 
-        // --- Simulation Logic (The "Wow" Factor) ---
         function runSimulation() {
             const btn = document.getElementById('sim-btn');
             const loader = document.getElementById('loading-indicator');
             const results = document.getElementById('results-grid');
             const empty = document.getElementById('empty-state');
-
+            
+            // Get final prompt for display
+            const modifiers = Object.values(state.selectedOptions).map(opt => opt.modifier);
+            const finalPrompt = document.getElementById('user-prompt').value + (modifiers.length > 0 ? `, ${modifiers.join(', ')}` : '');
+            
             // Reset UI
             btn.disabled = true;
             btn.classList.add('opacity-50', 'cursor-not-allowed');
             empty.classList.add('hidden');
             results.classList.add('hidden');
             loader.classList.remove('hidden');
+            document.getElementById('final-prompt').textContent = `Prompt IA généré: "${finalPrompt}"`;
 
             // Simulate Network Delay (1.5s)
             setTimeout(() => {
@@ -632,16 +763,5 @@ Assets: [Pack#402, Card#101, Card#102, Card#103, Card#104, Card#105]`
             document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
         }
     </script>
-
-    <!-- Tailwind Custom Animation -->
-    <style>
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeInUp {
-            animation: fadeInUp 0.5s ease-out forwards;
-        }
-    </style>
 </body>
 </html>

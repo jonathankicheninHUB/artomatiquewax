@@ -11,29 +11,88 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- FontAwesome for Icons (No SVG) -->
+    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase Imports for Authentication (Required for Canvas Environment) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Log Level Debug for monitoring
+        setLogLevel('Debug');
+        
+        window.firebaseApp = null;
+        window.firebaseAuth = null;
+        window.firestoreDb = null;
+        
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+        if (Object.keys(firebaseConfig).length) {
+            window.firebaseApp = initializeApp(firebaseConfig);
+            window.firebaseAuth = getAuth(window.firebaseApp);
+            window.firestoreDb = getFirestore(window.firebaseApp);
+            
+            // Initial Authentication using Custom Token if available, otherwise Anonymous
+            const auth = window.firebaseAuth;
+            const initialAuth = async () => {
+                try {
+                    const __initial_auth_token = typeof window.__initial_auth_token !== 'undefined' ? window.__initial_auth_token : undefined;
+                    
+                    if (__initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Firebase Auth Error:", error);
+                }
+            };
+            
+            // Listen for auth state changes and update UI
+            onAuthStateChanged(auth, (user) => {
+                const waxAccountElement = document.getElementById('wax-account-id');
+                const waxLoginBtn = document.getElementById('wax-login-btn');
+                
+                if (user) {
+                    // Simulate WAX Account ID based on Firebase UID
+                    // In a real app, this UID would be mapped to a WCW account
+                    const simulatedWaxId = user.uid.substring(0, 8) + '.wax';
+                    waxAccountElement.textContent = simulatedWaxId;
+                    waxAccountElement.classList.remove('text-red-500');
+                    waxAccountElement.classList.add('text-green-400');
+                    waxLoginBtn.innerHTML = '<i class="fa-solid fa-power-off mr-2"></i> Déconnexion';
+                    waxLoginBtn.onclick = () => auth.signOut();
+                } else {
+                    waxAccountElement.textContent = 'Non connecté';
+                    waxAccountElement.classList.add('text-red-500');
+                    waxAccountElement.classList.remove('text-green-400');
+                    waxLoginBtn.innerHTML = '<i class="fa-solid fa-wallet mr-2"></i> Connexion WAX';
+                    waxLoginBtn.onclick = () => initialAuth(); // Re-trigger sign-in
+                }
+            });
+
+            initialAuth();
+        } else {
+            console.warn("Firebase configuration not found. Running in UI-only simulation mode.");
+        }
+    </script>
+
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        wax: {
-                            50: '#fffbf0',
-                            100: '#ffefc2',
-                            500: '#f59e0b', // Amber-500 equivalent
-                            600: '#d97706',
-                            900: '#78350f',
-                        },
-                        stone: {
-                            50: '#fafaf9',
-                            800: '#292524',
-                            900: '#1c1917',
-                        }
+                        'waxtheme': '#FF570A', // Dark theme accent color (Vibrant Orange/Red)
+                        'wax-accent': '#f59e0b', // Keep original WAX amber for secondary elements
+                        'dark-bg': '#0F172A', // Slate-900 / Deep Dark Blue for body
+                        'dark-card': '#1E293B', // Slate-800 for cards
+                        'dark-border': '#334155', // Slate-700 for borders
                     },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
@@ -45,10 +104,24 @@
 
     <style>
         body {
-            background-color: #fafaf9; /* stone-50 */
-            color: #292524; /* stone-800 */
+            background-color: #0F172A; /* dark-bg */
+            color: #E2E8F0; /* Light text */
         }
         
+        .dark-card-bg {
+            background-color: #1E293B; /* dark-card */
+            border-color: #334155; /* dark-border */
+        }
+
+        .dark-border {
+            border-color: #334155;
+        }
+
+        .hero-pattern {
+            background-image: url("https://www.transparenttextures.com/patterns/cubes.png");
+            opacity: 0.1;
+        }
+
         /* Chart Container Styling Rules */
         .chart-container {
             position: relative;
@@ -60,30 +133,23 @@
             margin-right: auto;
         }
 
-        @media (min-width: 768px) {
-            .chart-container {
-                height: 350px;
-            }
-        }
-
-        /* Custom Scrollbar for inner content */
         .custom-scroll::-webkit-scrollbar {
             width: 6px;
         }
         .custom-scroll::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: #1E293B;
         }
         .custom-scroll::-webkit-scrollbar-thumb {
-            background: #d6d3d1; 
+            background: #475569; 
             border-radius: 4px;
         }
         .custom-scroll::-webkit-scrollbar-thumb:hover {
-            background: #a8a29e; 
+            background: #64748B; 
         }
 
         .step-card.active {
-            border-left: 4px solid #f59e0b;
-            background-color: #fffbf0;
+            border-left: 4px solid #FF570A; /* waxtheme */
+            background-color: #1E293B;
         }
         
         .step-card {
@@ -100,47 +166,53 @@
         }
     </style>
 </head>
-<body class="font-sans antialiased selection:bg-wax-100 selection:text-wax-900">
+<body class="font-sans antialiased selection:bg-waxtheme/30 selection:text-white">
 
     <!-- Navigation -->
-    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-200">
+    <nav class="sticky top-0 z-50 bg-dark-bg/80 backdrop-blur-md border-b dark-border">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-wax-500 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
+                    <div class="w-8 h-8 bg-waxtheme rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
                         <i class="fa-solid fa-robot"></i>
                     </div>
-                    <span class="font-bold text-xl tracking-tight text-stone-900">Artomatique<span class="text-wax-600">WAX</span></span>
+                    <span class="font-bold text-xl tracking-tight text-white">Artomatique<span class="text-waxtheme">WAX</span></span>
                 </div>
-                <div class="hidden md:flex space-x-8 text-sm font-medium text-stone-600">
-                    <a href="#stack" class="hover:text-wax-600 transition-colors">Stack Technique</a>
-                    <a href="#rarity" class="hover:text-wax-600 transition-colors">Logique Rareté</a>
-                    <a href="#pro-options" class="hover:text-wax-600 transition-colors">Options Pro</a>
-                    <a href="#simulation" class="px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 transition-colors shadow-sm">Lancer PoC</a>
+                <div class="flex items-center space-x-4">
+                    <!-- WAX Account Status -->
+                    <div class="hidden sm:block text-sm">
+                        <span class="text-gray-400">Compte WAX: </span>
+                        <span id="wax-account-id" class="font-mono font-semibold text-red-500">Non connecté</span>
+                    </div>
+                    
+                    <!-- WAX Login Button -->
+                    <button id="wax-login-btn" class="px-4 py-2 bg-waxtheme text-white font-semibold rounded-lg hover:bg-waxtheme/80 transition-colors shadow-md text-sm">
+                        <i class="fa-solid fa-wallet mr-2"></i> Connexion WAX
+                    </button>
                 </div>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="relative bg-stone-50 overflow-hidden">
-        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+    <section class="relative bg-dark-bg overflow-hidden border-b dark-border">
+        <div class="absolute inset-0 hero-pattern"></div>
         <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-            <div class="inline-block px-4 py-1.5 mb-6 text-xs font-semibold tracking-wider text-wax-900 uppercase bg-wax-100 rounded-full">
+            <div class="inline-block px-4 py-1.5 mb-6 text-xs font-semibold tracking-wider text-waxtheme uppercase bg-waxtheme/20 rounded-full border border-waxtheme/50">
                 Preuve de Concept (PoC)
             </div>
-            <h1 class="text-4xl md:text-5xl font-extrabold text-stone-900 mb-6 leading-tight">
-                Production Automatisée de Packs NFT <br>sur <span class="text-wax-600">WAX Testnet</span>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">
+                Production Automatisée de Packs NFT <br>sur <span class="text-waxtheme">WAX Testnet</span>
             </h1>
-            <p class="text-xl text-stone-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Une démonstration technique de l'orchestration complète : de la génération par prompt à la distribution de packs de 5 cartes, utilisant uniquement des outils gratuits.
+            <p class="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Démonstration de l'orchestration complète : de la génération IA à la distribution de packs de 5 cartes, optimisée pour le coût.
             </p>
             <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <button onclick="scrollToSection('workflow')" class="px-8 py-3.5 bg-white border border-stone-300 text-stone-700 font-semibold rounded-xl hover:bg-stone-50 transition-all shadow-sm flex items-center justify-center gap-2 group">
+                <button onclick="scrollToSection('workflow')" class="px-8 py-3.5 bg-dark-card border dark-border text-gray-200 font-semibold rounded-xl hover:bg-dark-card/70 transition-all shadow-lg flex items-center justify-center gap-2 group">
                     <span>Explorer le Workflow</span>
                     <i class="fa-solid fa-arrow-down group-hover:translate-y-1 transition-transform"></i>
                 </button>
-                <button onclick="scrollToSection('simulation')" class="px-8 py-3.5 bg-wax-500 text-white font-semibold rounded-xl hover:bg-wax-600 transition-all shadow-lg hover:shadow-wax-500/30 flex items-center justify-center gap-2">
+                <button onclick="scrollToSection('simulation')" class="px-8 py-3.5 bg-waxtheme text-white font-semibold rounded-xl hover:bg-waxtheme/80 transition-all shadow-lg shadow-waxtheme/30 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-play"></i>
                     <span>Simuler le Minting</span>
                 </button>
@@ -148,24 +220,24 @@
         </div>
     </section>
 
-    <!-- Section WAX Wallet Widget (Updated to 2 columns) -->
-    <section class="py-12 bg-wax-50 border-b border-wax-100">
+    <!-- Section WAX Wallet Widget (Dark Theme) -->
+    <section class="py-12 bg-dark-card border-b dark-border">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- 1. Acheter WAX -->
-                <div class="bg-white p-6 rounded-xl shadow-md border border-wax-200">
-                    <h3 class="text-xl font-bold text-stone-900 mb-3 flex items-center gap-2"><i class="fa-solid fa-cart-shopping text-wax-600"></i> Acheter WAX</h3>
-                    <p class="text-sm text-stone-600 mb-4">Besoin de WAX pour les options Premium ? Achetez-en facilement via notre partenaire d'échange.</p>
-                    <button class="w-full px-4 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors text-sm">
+                <div class="dark-card-bg p-6 rounded-xl shadow-xl border dark-border">
+                    <h3 class="text-xl font-bold text-white mb-3 flex items-center gap-2"><i class="fa-solid fa-cart-shopping text-waxtheme"></i> Acheter WAX</h3>
+                    <p class="text-sm text-gray-400 mb-4">Achetez des tokens WAXP pour procéder à des transactions réelles sur le Mainnet.</p>
+                    <button class="w-full px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors text-sm shadow-md">
                         <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Acheter WAX Maintenant
                     </button>
                 </div>
                 <!-- 2. Vendre WAX -->
-                <div class="bg-white p-6 rounded-xl shadow-md border border-wax-200">
-                    <h3 class="text-xl font-bold text-stone-900 mb-3 flex items-center gap-2"><i class="fa-solid fa-exchange-alt text-wax-600"></i> Vendre / Échanger</h3>
-                    <p class="text-sm text-stone-600 mb-4">Convertissez vos gains en WAX en monnaie fiduciaire ou autres crypto-monnaies.</p>
-                    <button class="w-full px-4 py-2 bg-stone-500 text-white font-semibold rounded-lg hover:bg-stone-600 transition-colors text-sm">
-                        <i class="fa-solid fa-wallet mr-2"></i> Se Connecter au Portefeuille
+                <div class="dark-card-bg p-6 rounded-xl shadow-xl border dark-border">
+                    <h3 class="text-xl font-bold text-white mb-3 flex items-center gap-2"><i class="fa-solid fa-exchange-alt text-waxtheme"></i> Vendre / Échanger</h3>
+                    <p class="text-sm text-gray-400 mb-4">Convertissez vos gains WAX en monnaie fiduciaire ou autres crypto-monnaies.</p>
+                    <button class="w-full px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors text-sm shadow-md">
+                        <i class="fa-solid fa-wallet mr-2"></i> Voir les Exchanges
                     </button>
                 </div>
             </div>
@@ -173,54 +245,54 @@
     </section>
 
     <!-- Section 1: Stack Technique (Services Gratuits) -->
-    <section id="stack" class="py-16 bg-white border-b border-stone-100">
+    <section id="stack" class="py-16 bg-dark-bg border-b dark-border">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="mb-12">
-                <h2 class="text-3xl font-bold text-stone-900 mb-4">Architecture & Outils Gratuits</h2>
-                <p class="text-stone-600 max-w-3xl">
-                    Ce PoC repose sur une sélection rigoureuse d'outils permettant de valider le concept sans coûts d'infrastructure initiaux. Chaque outil joue un rôle critique dans le pipeline automatisé.
+                <h2 class="text-3xl font-bold text-white mb-4">Architecture & Outils Gratuits</h2>
+                <p class="text-gray-400 max-w-3xl">
+                    Ce PoC utilise une sélection d'outils gratuits pour valider le pipeline sans coûts d'infrastructure initiaux.
                 </p>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Tool Cards (unchanged for brevity) -->
-                <div class="p-6 bg-stone-50 rounded-2xl border border-stone-100 hover:border-wax-500/50 hover:shadow-md transition-all group">
-                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <!-- Tool Cards -->
+                <div class="p-6 dark-card-bg rounded-2xl border dark-border hover:border-waxtheme/50 hover:shadow-2xl hover:shadow-waxtheme/10 transition-all group">
+                    <div class="w-12 h-12 bg-blue-600/20 text-blue-400 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <i class="fa-solid fa-network-wired text-xl"></i>
                     </div>
-                    <h3 class="text-lg font-bold text-stone-900 mb-2">n8n (Cœur)</h3>
-                    <p class="text-sm text-stone-500 mb-3">Orchestrateur du flux</p>
-                    <p class="text-sm text-stone-600 leading-relaxed">
+                    <h3 class="text-lg font-bold text-white mb-2">n8n (Cœur)</h3>
+                    <p class="text-sm text-gray-500 mb-3">Orchestrateur du flux</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">
                         Gère les déclencheurs Webhook, la logique conditionnelle et les boucles de production des cartes.
                     </p>
                 </div>
-                <div class="p-6 bg-stone-50 rounded-2xl border border-stone-100 hover:border-wax-500/50 hover:shadow-md transition-all group">
-                    <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <div class="p-6 dark-card-bg rounded-2xl border dark-border hover:border-waxtheme/50 hover:shadow-2xl hover:shadow-waxtheme/10 transition-all group">
+                    <div class="w-12 h-12 bg-purple-600/20 text-purple-400 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
                     </div>
-                    <h3 class="text-lg font-bold text-stone-900 mb-2">Mock Data (IA)</h3>
-                    <p class="text-sm text-stone-500 mb-3">Simulation Générative</p>
-                    <p class="text-sm text-stone-600 leading-relaxed">
+                    <h3 class="text-lg font-bold text-white mb-2">Mock Data (IA)</h3>
+                    <p class="text-sm text-gray-500 mb-3">Simulation Générative</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">
                         Simule les réponses d'API IA coûteuses (DALL-E) pour valider la logique sans frais.
                     </p>
                 </div>
-                <div class="p-6 bg-stone-50 rounded-2xl border border-stone-100 hover:border-wax-500/50 hover:shadow-md transition-all group">
-                    <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <div class="p-6 dark-card-bg rounded-2xl border dark-border hover:border-waxtheme/50 hover:shadow-2xl hover:shadow-waxtheme/10 transition-all group">
+                    <div class="w-12 h-12 bg-orange-600/20 text-orange-400 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <i class="fa-solid fa-cube text-xl"></i>
                     </div>
-                    <h3 class="text-lg font-bold text-stone-900 mb-2">Pinata (IPFS)</h3>
-                    <p class="text-sm text-stone-500 mb-3">Stockage Décentralisé</p>
-                    <p class="text-sm text-stone-600 leading-relaxed">
+                    <h3 class="text-lg font-bold text-white mb-2">Pinata (IPFS)</h3>
+                    <p class="text-sm text-gray-500 mb-3">Stockage Décentralisé</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">
                         Hébergement gratuit des assets visuels (images des cartes) pour obtenir les Hash IPFS.
                     </p>
                 </div>
-                <div class="p-6 bg-stone-50 rounded-2xl border border-stone-100 hover:border-wax-500/50 hover:shadow-md transition-all group">
-                    <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <div class="p-6 dark-card-bg rounded-2xl border dark-border hover:border-waxtheme/50 hover:shadow-2xl hover:shadow-waxtheme/10 transition-all group">
+                    <div class="w-12 h-12 bg-yellow-600/20 text-yellow-400 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <i class="fa-solid fa-coins text-xl"></i>
                     </div>
-                    <h3 class="text-lg font-bold text-stone-900 mb-2">WAX Testnet</h3>
-                    <p class="text-sm text-stone-500 mb-3">Blockchain & AtomicAssets</p>
-                    <p class="text-sm text-stone-600 leading-relaxed">
+                    <h3 class="text-lg font-bold text-white mb-2">WAX Testnet</h3>
+                    <p class="text-sm text-gray-500 mb-3">Blockchain & AtomicAssets</p>
+                    <p class="text-sm text-gray-400 leading-relaxed">
                         Environnement de minting sans frais de gaz réels, idéal pour les tests de smart contracts.
                     </p>
                 </div>
@@ -229,14 +301,14 @@
     </section>
 
     <!-- Section: Options PRO and WAX Pricing -->
-    <section id="pro-options" class="py-16 bg-stone-50 border-y border-stone-200">
+    <section id="pro-options" class="py-16 bg-dark-bg border-y dark-border">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
                 
                 <!-- Left: Pro Options Selector -->
-                <div class="bg-white p-8 rounded-2xl shadow-lg border border-stone-200">
-                    <h2 class="text-2xl font-bold text-stone-900 mb-2 flex items-center gap-2"><i class="fa-solid fa-star text-wax-600"></i> Options Artomatique Pro</h2>
-                    <p class="text-stone-600 mb-6">
+                <div class="dark-card-bg p-8 rounded-2xl shadow-xl border dark-border">
+                    <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-star text-waxtheme"></i> Options Artomatique Pro</h2>
+                    <p class="text-gray-400 mb-6">
                         Améliorez vos cartes avec des modificateurs de prompt pour une qualité et un style supérieurs. Chaque option augmente le coût de minage en WAX.
                     </p>
 
@@ -246,97 +318,96 @@
                 </div>
 
                 <!-- Right: Pricing and Checkout -->
-                <div class="bg-white p-8 rounded-2xl shadow-lg border border-stone-200 sticky top-20">
-                    <h3 class="text-2xl font-bold text-stone-900 mb-6 flex items-center gap-2"><i class="fa-solid fa-money-bill-wave text-wax-600"></i> Récapitulatif WAX</h3>
+                <div class="dark-card-bg p-8 rounded-2xl shadow-xl border dark-border sticky top-20">
+                    <h3 class="text-2xl font-bold text-white mb-6 flex items-center gap-2"><i class="fa-solid fa-money-bill-wave text-waxtheme"></i> Récapitulatif WAX</h3>
 
-                    <div class="space-y-4 border-b pb-4 mb-4">
-                        <div class="flex justify-between items-center text-stone-700">
+                    <div class="space-y-4 border-b dark-border pb-4 mb-4">
+                        <div class="flex justify-between items-center text-gray-300">
                             <span>Pack Standard (5 Cartes)</span>
-                            <span class="font-bold text-stone-900">20 WAX</span>
+                            <span class="font-bold text-white">20 WAX</span>
                         </div>
-                        <div class="flex justify-between items-center text-stone-700">
+                        <div class="flex justify-between items-center text-gray-300">
                             <span>Coût de Base IA / Minting</span>
-                            <span class="font-bold text-red-500">-7 WAX</span>
+                            <span class="font-bold text-red-400">-7 WAX</span>
                         </div>
-                        <div class="flex justify-between items-center text-stone-700 border-t pt-2 mt-2">
+                        <div class="flex justify-between items-center text-gray-300 border-t dark-border pt-2 mt-2">
                             <span>**Marge Brute (Profit)**</span>
-                            <span id="base-profit" class="font-bold text-green-600">13 WAX</span>
+                            <span id="base-profit" class="font-bold text-green-400">13 WAX</span>
                         </div>
                     </div>
 
                     <div id="cost-details" class="space-y-3 mb-6">
-                        <div class="flex justify-between items-center text-stone-700">
+                        <div class="flex justify-between items-center text-gray-300">
                             <span>Options Artistiques Suppl.</span>
-                            <span id="extra-cost" class="font-bold text-wax-600">+ 0 WAX</span>
+                            <span id="extra-cost" class="font-bold text-waxtheme">+ 0 WAX</span>
                         </div>
-                        <!-- Affiliation section removed -->
                     </div>
 
-                    <div class="flex justify-between items-center bg-wax-100 p-4 rounded-xl border border-wax-200">
-                        <span class="text-xl font-bold text-stone-900">COÛT TOTAL DU PACK</span>
-                        <span id="total-wax-cost" class="text-3xl font-extrabold text-wax-600">
+                    <div class="flex justify-between items-center bg-waxtheme/20 p-4 rounded-xl border border-waxtheme/50">
+                        <span class="text-xl font-bold text-white">COÛT TOTAL DU PACK</span>
+                        <span id="total-wax-cost" class="text-3xl font-extrabold text-waxtheme">
                             20 WAX
                         </span>
                     </div>
 
-                    <button class="w-full mt-6 px-6 py-3 bg-wax-500 text-white font-bold rounded-xl hover:bg-wax-600 transition-colors shadow-lg flex items-center justify-center gap-2">
+                    <button class="w-full mt-6 px-6 py-3 bg-waxtheme text-white font-bold rounded-xl hover:bg-waxtheme/80 transition-colors shadow-lg shadow-waxtheme/30 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-shield-halved"></i> Procéder au Minting (Simulé)
                     </button>
-                    <p class="text-center text-xs text-stone-500 mt-3">Transaction en WAX Testnet. Pas de frais réels.</p>
+                    <p class="text-center text-xs text-gray-500 mt-3">Transaction en WAX Testnet. Pas de frais réels.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Section 2: Rarity Logic Dashboard -->
-    <section id="rarity" class="py-16 bg-white">
+    <section id="rarity" class="py-16 bg-dark-bg border-b dark-border">
         <!-- Content remains the same -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
                 <div class="lg:col-span-1">
-                    <div class="inline-block px-3 py-1 mb-4 text-xs font-semibold text-wax-600 bg-wax-100 rounded-md">Gamification</div>
-                    <h2 class="text-3xl font-bold text-stone-900 mb-6">Logique de Rareté & Taux de Drop</h2>
-                    <p class="text-stone-600 mb-6 leading-relaxed">
-                        L'automatisation ne se contente pas de créer des images ; elle applique une logique algorithmique pour attribuer une valeur à chaque carte du pack. Cette logique est exécutée via un <strong>nœud Function JavaScript</strong> dans n8n.
+                    <div class="inline-block px-3 py-1 mb-4 text-xs font-semibold text-waxtheme bg-waxtheme/20 rounded-md border border-waxtheme/50">Gamification</div>
+                    <h2 class="text-3xl font-bold text-white mb-6">Logique de Rareté & Taux de Drop</h2>
+                    <p class="text-gray-400 mb-6 leading-relaxed">
+                        L'automatisation applique une logique algorithmique pour attribuer une valeur à chaque carte du pack.
                     </p>
                     <ul class="space-y-4 mb-8">
                         <li class="flex items-start">
-                            <span class="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-white text-xs mr-3 mt-1 shadow-sm"><i class="fa-solid fa-crown"></i></span>
+                            <span class="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-gray-900 text-xs mr-3 mt-1 shadow-sm"><i class="fa-solid fa-crown"></i></span>
                             <div>
-                                <strong class="text-stone-900">Légendaire (1%)</strong>
-                                <p class="text-sm text-stone-500">Extrêmement rare, génère une excitation maximale.</p>
+                                <strong class="text-white">Légendaire (1%)</strong>
+                                <p class="text-sm text-gray-500">Extrêmement rare, génère une excitation maximale.</p>
                             </div>
                         </li>
                         <li class="flex items-start">
-                            <span class="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center text-white text-xs mr-3 mt-1 shadow-sm"><i class="fa-solid fa-gem"></i></span>
+                            <span class="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center text-gray-900 text-xs mr-3 mt-1 shadow-sm"><i class="fa-solid fa-gem"></i></span>
                             <div>
-                                <strong class="text-stone-900">Rare (10%)</strong>
-                                <p class="text-sm text-stone-500">Un bon tirage, souvent garanti dans les packs premium.</p>
+                                <strong class="text-white">Rare (10%)</strong>
+                                <p class="text-sm text-gray-500">Un bon tirage, souvent garanti dans les packs premium.</p>
                             </div>
                         </li>
                         <li class="flex items-start">
-                            <span class="w-6 h-6 bg-stone-400 rounded-full flex items-center justify-center text-white text-xs mr-3 mt-1 shadow-sm"><i class="fa-solid fa-circle"></i></span>
+                            <span class="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center text-white text-xs mr-3 mt-1 shadow-sm"><i class="fa-solid fa-circle"></i></span>
                             <div>
-                                <strong class="text-stone-900">Commun (89%)</strong>
-                                <p class="text-sm text-stone-500">La base de la collection.</p>
+                                <strong class="text-white">Commun (89%)</strong>
+                                <p class="text-sm text-gray-500">La base de la collection.</p>
                             </div>
                         </li>
                     </ul>
                 </div>
 
-                <div class="lg:col-span-2 bg-stone-50 p-8 rounded-2xl shadow-sm border border-stone-200">
+                <div class="lg:col-span-2 dark-card-bg p-8 rounded-2xl shadow-xl border dark-border">
                     <div class="flex flex-col md:flex-row items-center justify-between mb-6">
-                        <h3 class="font-bold text-stone-800">Distribution Probabiliste</h3>
-                        <div class="text-sm text-stone-500">Modèle Pack 5 Cartes</div>
+                        <h3 class="font-bold text-white">Distribution Probabiliste</h3>
+                        <div class="text-sm text-gray-400">Modèle Pack 5 Cartes</div>
                     </div>
                     
                     <div class="chart-container">
                         <canvas id="rarityChart"></canvas>
                     </div>
 
-                    <div class="mt-8 p-4 bg-white rounded-xl border border-stone-100 text-center">
-                        <p class="text-sm text-stone-600">
-                            <i class="fa-solid fa-calculator mr-2 text-wax-600"></i>
+                    <div class="mt-8 p-4 bg-dark-bg rounded-xl border dark-border text-center">
+                        <p class="text-sm text-gray-400">
+                            <i class="fa-solid fa-calculator mr-2 text-waxtheme"></i>
                             Calcul dynamique effectué par le code JavaScript du nœud n8n pour chaque carte générée.
                         </p>
                     </div>
@@ -346,68 +417,68 @@
     </section>
 
     <!-- Section 3: Workflow Engine -->
-    <section id="workflow" class="py-16 bg-white border-y border-stone-200">
+    <section id="workflow" class="py-16 bg-dark-bg border-y dark-border">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="mb-12 text-center">
-                <h2 class="text-3xl font-bold text-stone-900">Le Workflow n8n Détaillé</h2>
-                <p class="text-stone-500 mt-2">Cliquez sur les étapes pour visualiser le flux de données.</p>
+                <h2 class="text-3xl font-bold text-white">Le Workflow n8n Détaillé</h2>
+                <p class="text-gray-400 mt-2">Cliquez sur les étapes pour visualiser le flux de données.</p>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <!-- Left: Steps List (unchanged for brevity) -->
+                <!-- Left: Steps List -->
                 <div class="lg:col-span-5 space-y-3">
-                    <div onclick="setStep(1)" id="step-btn-1" class="step-card active cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
-                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">1</div>
+                    <div onclick="setStep(1)" id="step-btn-1" class="step-card active cursor-pointer p-4 rounded-lg hover:bg-dark-card flex items-center gap-4 group">
+                        <div class="w-10 h-10 rounded-full bg-dark-border text-gray-400 font-bold flex items-center justify-center group-hover:bg-waxtheme/20 group-hover:text-waxtheme transition-colors">1</div>
                         <div>
-                            <h4 class="font-bold text-stone-900">Trigger (Webhook)</h4>
-                            <p class="text-xs text-stone-500">Réception du Prompt & Options Payantes</p>
+                            <h4 class="font-bold text-white">Trigger (Webhook)</h4>
+                            <p class="text-xs text-gray-400">Réception du Prompt & Options Payantes</p>
                         </div>
                     </div>
-                    <div onclick="setStep(2)" id="step-btn-2" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
-                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">2</div>
+                    <div onclick="setStep(2)" id="step-btn-2" class="step-card cursor-pointer p-4 rounded-lg hover:bg-dark-card flex items-center gap-4 group">
+                        <div class="w-10 h-10 rounded-full bg-dark-border text-gray-400 font-bold flex items-center justify-center group-hover:bg-waxtheme/20 group-hover:text-waxtheme transition-colors">2</div>
                         <div>
-                            <h4 class="font-bold text-stone-900">Logique Pack & Rareté</h4>
-                            <p class="text-xs text-stone-500">Calcul JS des 5 cartes</p>
+                            <h4 class="font-bold text-white">Logique Pack & Rareté</h4>
+                            <p class="text-xs text-gray-400">Calcul JS des 5 cartes</p>
                         </div>
                     </div>
-                    <div onclick="setStep(3)" id="step-btn-3" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
-                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">3</div>
+                    <div onclick="setStep(3)" id="step-btn-3" class="step-card cursor-pointer p-4 rounded-lg hover:bg-dark-card flex items-center gap-4 group">
+                        <div class="w-10 h-10 rounded-full bg-dark-border text-gray-400 font-bold flex items-center justify-center group-hover:bg-waxtheme/20 group-hover:text-waxtheme transition-colors">3</div>
                         <div>
-                            <h4 class="font-bold text-stone-900">Mock Image Pack</h4>
-                            <p class="text-xs text-stone-500">Simulation IA & Hash IPFS</p>
+                            <h4 class="font-bold text-white">Mock Image Pack</h4>
+                            <p class="text-xs text-gray-400">Simulation IA & Hash IPFS</p>
                         </div>
                     </div>
-                    <div onclick="setStep(4)" id="step-btn-4" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
-                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">4</div>
+                    <div onclick="setStep(4)" id="step-btn-4" class="step-card cursor-pointer p-4 rounded-lg hover:bg-dark-card flex items-center gap-4 group">
+                        <div class="w-10 h-10 rounded-full bg-dark-border text-gray-400 font-bold flex items-center justify-center group-hover:bg-waxtheme/20 group-hover:text-waxtheme transition-colors">4</div>
                         <div>
-                            <h4 class="font-bold text-stone-900">Mint Pack NFT</h4>
-                            <p class="text-xs text-stone-500">Appel AtomicAssets (WAX)</p>
+                            <h4 class="font-bold text-white">Mint Pack NFT</h4>
+                            <p class="text-xs text-gray-400">Appel AtomicAssets (WAX)</p>
                         </div>
                     </div>
-                    <div onclick="setStep(5)" id="step-btn-5" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
-                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">5</div>
+                    <div onclick="setStep(5)" id="step-btn-5" class="step-card cursor-pointer p-4 rounded-lg hover:bg-dark-card flex items-center gap-4 group">
+                        <div class="w-10 h-10 rounded-full bg-dark-border text-gray-400 font-bold flex items-center justify-center group-hover:bg-waxtheme/20 group-hover:text-waxtheme transition-colors">5</div>
                         <div>
-                            <h4 class="font-bold text-stone-900">Boucle Mint Cartes (x5)</h4>
-                            <p class="text-xs text-stone-500">Split Batches -> Mint Individuel</p>
+                            <h4 class="font-bold text-white">Boucle Mint Cartes (x5)</h4>
+                            <p class="text-xs text-gray-400">Split Batches -> Mint Individuel</p>
                         </div>
                     </div>
-                    <div onclick="setStep(6)" id="step-btn-6" class="step-card cursor-pointer p-4 rounded-lg hover:bg-stone-50 flex items-center gap-4 group">
-                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-600 font-bold flex items-center justify-center group-hover:bg-wax-100 group-hover:text-wax-600 transition-colors">6</div>
+                    <div onclick="setStep(6)" id="step-btn-6" class="step-card cursor-pointer p-4 rounded-lg hover:bg-dark-card flex items-center gap-4 group">
+                        <div class="w-10 h-10 rounded-full bg-dark-border text-gray-400 font-bold flex items-center justify-center group-hover:bg-waxtheme/20 group-hover:text-waxtheme transition-colors">6</div>
                         <div>
-                            <h4 class="font-bold text-stone-900">Distribution Finale</h4>
-                            <p class="text-xs text-stone-500">Transfert au portefeuille utilisateur</p>
+                            <h4 class="font-bold text-white">Distribution Finale</h4>
+                            <p class="text-xs text-gray-400">Transfert au portefeuille utilisateur</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Right: Data Visualizer (unchanged for brevity) -->
                 <div class="lg:col-span-7">
-                    <div class="bg-stone-900 rounded-xl shadow-2xl overflow-hidden h-full flex flex-col">
-                        <div class="bg-stone-800 px-4 py-3 flex items-center justify-between border-b border-stone-700">
-                            <span class="text-stone-300 text-sm font-mono"><i class="fa-solid fa-code mr-2"></i>Payload Data Viewer</span>
-                            <span id="step-badge" class="px-2 py-0.5 rounded text-xs font-bold bg-wax-500 text-white">Étape 1</span>
+                    <div class="bg-gray-900 rounded-xl shadow-2xl overflow-hidden h-full flex flex-col border dark-border">
+                        <div class="bg-gray-800 px-4 py-3 flex items-center justify-between border-b border-gray-700">
+                            <span class="text-gray-300 text-sm font-mono"><i class="fa-solid fa-code mr-2"></i>Payload Data Viewer</span>
+                            <span id="step-badge" class="px-2 py-0.5 rounded text-xs font-bold bg-waxtheme text-white">Étape 1</span>
                         </div>
-                        <div class="p-6 overflow-y-auto custom-scroll flex-grow font-mono text-sm">
+                        <div class="p-6 overflow-y-auto custom-scroll flex-grow font-mono text-sm text-green-300">
                             <div id="data-display" class="space-y-2">
                                 <!-- Dynamic Content Injected via JS -->
                             </div>
@@ -419,60 +490,60 @@
     </section>
 
     <!-- Section 4: Live Simulation -->
-    <section id="simulation" class="py-20 bg-stone-50">
+    <section id="simulation" class="py-20 bg-dark-bg border-t dark-border">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
-                <div class="inline-block px-3 py-1 mb-4 text-xs font-semibold text-green-600 bg-green-100 rounded-md">Démo Interactive</div>
-                <h2 class="text-3xl font-bold text-stone-900">Simulateur de Production n8n</h2>
-                <p class="text-stone-600 mt-4 max-w-2xl mx-auto">
+                <div class="inline-block px-3 py-1 mb-4 text-xs font-semibold text-green-400 bg-green-900/40 rounded-md border border-green-600/50">Démo Interactive</div>
+                <h2 class="text-3xl font-bold text-white">Simulateur de Production n8n</h2>
+                <p class="text-gray-400 mt-4 max-w-2xl mx-auto">
                     Testez la logique du PoC en temps réel. Le prompt IA est généré en fonction des options payantes sélectionnées ci-dessus.
                 </p>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg border border-stone-200 overflow-hidden">
+            <div class="dark-card-bg rounded-2xl shadow-xl border dark-border overflow-hidden">
                 <!-- Control Panel -->
-                <div class="p-8 border-b border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-6 bg-stone-50/50">
+                <div class="p-8 border-b dark-border flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div class="flex-1 w-full sm:w-auto">
-                        <label class="block text-xs font-bold text-stone-500 uppercase mb-2">Prompt Utilisateur</label>
-                        <input type="text" id="user-prompt" value="Cyberpunk Samurai Cat" class="w-full bg-white border border-stone-300 rounded-lg px-4 py-2 text-stone-700 focus:outline-none focus:ring-2 focus:ring-wax-500">
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Prompt Utilisateur</label>
+                        <input type="text" id="user-prompt" value="Cyberpunk Samurai Cat" class="w-full bg-gray-700 border dark-border rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-waxtheme">
                     </div>
-                    <button onclick="runSimulation()" id="sim-btn" class="w-full sm:w-auto px-8 py-3 bg-wax-600 hover:bg-wax-500 text-white font-bold rounded-xl shadow-lg shadow-wax-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                    <button onclick="runSimulation()" id="sim-btn" class="w-full sm:w-auto px-8 py-3 bg-waxtheme hover:bg-waxtheme/80 text-white font-bold rounded-xl shadow-lg shadow-waxtheme/30 transition-all transform active:scale-95 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-bolt"></i>
                         <span>Mint avec <span id="btn-wax-cost">20</span> WAX</span>
                     </button>
                 </div>
 
                 <!-- Results Area -->
-                <div class="p-8 bg-stone-100/50 min-h-[300px]">
+                <div class="p-8 bg-gray-900/50 min-h-[300px]">
                     <div id="loading-indicator" class="hidden flex flex-col items-center justify-center h-48">
-                        <div class="w-12 h-12 border-4 border-wax-200 border-t-wax-600 rounded-full animate-spin mb-4"></div>
-                        <p class="text-stone-500 animate-pulse">Orchestration n8n en cours...</p>
-                        <p id="final-prompt" class="text-xs mt-2 text-stone-400 font-mono"></p>
+                        <div class="w-12 h-12 border-4 border-waxtheme/30 border-t-waxtheme rounded-full animate-spin mb-4"></div>
+                        <p class="text-gray-400 animate-pulse">Orchestration n8n en cours...</p>
+                        <p id="final-prompt" class="text-xs mt-2 text-gray-500 font-mono"></p>
                     </div>
 
                     <div id="results-grid" class="hidden grid grid-cols-2 md:grid-cols-5 gap-4">
                         <!-- Cards injected here -->
                     </div>
 
-                    <div id="empty-state" class="flex flex-col items-center justify-center h-48 text-stone-400">
+                    <div id="empty-state" class="flex flex-col items-center justify-center h-48 text-gray-600">
                         <i class="fa-solid fa-box-open text-4xl mb-3 opacity-50"></i>
                         <p>En attente du déclencheur webhook...</p>
                     </div>
                 </div>
 
                 <!-- Simulation Stats -->
-                <div class="p-6 bg-white border-t border-stone-200 flex justify-between items-center text-sm">
-                    <span class="text-stone-500"><i class="fa-solid fa-database mr-2"></i>Status WAX Testnet: <span class="text-green-600 font-semibold">Connecté (Simulé)</span></span>
-                    <span class="text-stone-500">Marge Profit (simulée): <span id="sim-profit" class="text-stone-900 font-bold">13 WAX</span></span>
+                <div class="p-6 bg-dark-card border-t dark-border flex justify-between items-center text-sm">
+                    <span class="text-gray-400"><i class="fa-solid fa-database mr-2"></i>Status WAX Testnet: <span class="text-green-400 font-semibold">Connecté (Simulé)</span></span>
+                    <span class="text-gray-400">Marge Profit (simulée): <span id="sim-profit" class="text-white font-bold">13 WAX</span></span>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="bg-stone-900 text-stone-400 py-12 border-t border-stone-800">
+    <footer class="bg-gray-900 text-gray-400 py-12 border-t border-gray-800">
         <div class="max-w-7xl mx-auto px-4 text-center">
-            <p class="mb-4 text-stone-100 font-semibold">Artomatique WAX PoC</p>
+            <p class="mb-4 text-white font-semibold">Artomatique WAX PoC</p>
             <p class="text-sm">Maquette Technique pour l'automatisation n8n et le modèle économique WAX.</p>
         </div>
     </footer>
@@ -525,7 +596,49 @@
   },
   ...
 ]`,
-            3: `...`, 4: `...`, 5: `...`, 6: `...` // Simplified for the update
+            3: `<span class="text-purple-400">// MOCK IA & IPFS PUSH</span>
+[
+    {
+        "card_id": 1,
+        "rarity": "Common",
+        "ipfs_hash": "Qma...4a2b"
+    },
+    {
+        "card_id": 2,
+        "rarity": "Rare",
+        "ipfs_hash": "Qmb...5f1c"
+    },
+    ...
+]`,
+            4: `<span class="text-yellow-400">// ATOMICASSETS MINT PACK TEMPLATE</span>
+// Transaction: 'createpack'
+{
+    "collection": "artomatique",
+    "template_id": 9999, // Pack template
+    "recipient": "user1.test",
+    "memo": "Pack 5 Cartes IA",
+    "price_paid": 29 // WAX
+}`,
+            5: `<span class="text-orange-400">// LOOP: MINT INDIVIDUAL CARDS (x5)</span>
+// Transaction: 'mintasset' (Batch split)
+[
+    {
+        "template_id": 101, // Rare
+        "asset_id": 40001
+    },
+    {
+        "template_id": 103, // Common
+        "asset_id": 40002
+    },
+    ...
+]`,
+            6: `<span class="text-green-400">// FINAL TRANSFER</span>
+// Transaction: 'transfer'
+{
+    "assets_to_transfer": [40001, 40002, ...],
+    "sender": "artomatique.wax",
+    "recipient": "user1.test"
+}`
         };
 
         // --- Init Functions ---
@@ -535,6 +648,9 @@
             updateTotalCost();
             setStep(1);
             document.getElementById('base-profit').textContent = `${BASE_PACK_COST - BASE_IA_COST} WAX`;
+            
+            // Set input change listener for prompt update
+            document.getElementById('user-prompt').addEventListener('input', updateTotalCost);
         });
 
         // --- Core Functions ---
@@ -551,8 +667,8 @@
             }, {});
 
             for (const category in groupedOptions) {
-                html += `<div class="p-4 bg-stone-50 rounded-lg">
-                    <h4 class="font-bold text-stone-800 border-b pb-2 mb-3 text-sm">${category.toUpperCase()}</h4>
+                html += `<div class="p-4 bg-gray-800 rounded-lg border dark-border">
+                    <h4 class="font-bold text-gray-300 border-b border-gray-700 pb-2 mb-3 text-sm">${category.toUpperCase()}</h4>
                     <div class="space-y-2">`;
                 
                 groupedOptions[category].forEach(option => {
@@ -561,10 +677,10 @@
                             <div class="flex items-center">
                                 <input type="checkbox" id="${option.id}" data-cost="${option.cost}" data-modifier="${option.modifier}"
                                     onchange="handleOptionChange(this)"
-                                    class="h-4 w-4 text-wax-600 border-stone-300 rounded focus:ring-wax-500">
-                                <span class="ml-3 text-sm font-medium text-stone-700">${option.name}</span>
+                                    class="h-4 w-4 text-waxtheme border-gray-600 rounded focus:ring-waxtheme bg-gray-700 checked:bg-waxtheme">
+                                <span class="ml-3 text-sm font-medium text-gray-200">${option.name}</span>
                             </div>
-                            <span class="text-xs font-semibold text-wax-700 bg-wax-100 px-2 py-0.5 rounded-full">+${option.cost} WAX</span>
+                            <span class="text-xs font-semibold text-waxtheme bg-waxtheme/20 px-2 py-0.5 rounded-full">+${option.cost} WAX</span>
                         </label>`;
                 });
                 
@@ -607,24 +723,31 @@
             document.getElementById('sim-profit').textContent = `${profit.toFixed(1)} WAX`;
             
             // Update step 1 data with current cost
-            const currentStep1Data = stepData[1];
-            stepData[1] = currentStep1Data.replace(
-                /"total_wax_paid": \d+/, 
-                `"total_wax_paid": ${totalCost}`
-            );
-            
-            // Update step 2 data with modifiers
-            const basePrompt = document.getElementById('user-prompt').value;
+            const basePrompt = document.getElementById('user-prompt').value || "Cyberpunk Samurai Cat";
             const finalPrompt = basePrompt + (modifiers.length > 0 ? `, ${modifiers.join(', ')}` : '');
             
-            stepData[2] = stepData[2].replace(
-                /Final Prompt: ".*"/, 
-                `Final Prompt: "${finalPrompt}"`
+            // Reconstruct Step 1 Data
+            const currentStep1Data = stepData[1];
+            stepData[1] = currentStep1Data.replace(
+                /\"theme_prompt\": \".*\"/, 
+                `"theme_prompt": "${basePrompt}"`
             ).replace(
-                /selected_mods": \[.*?\],/s,
+                /\"total_wax_paid\": \d+/, 
+                `"total_wax_paid": ${totalCost}`
+            ).replace(
+                /selected_mods\": \[.*?\],/s,
                 `selected_mods": [\n        "${modifiers.join('", \n        "')}"\n    ],`
             );
             
+            // Reconstruct Step 2 Data
+            stepData[2] = stepData[2].replace(
+                /Final Prompt: \".*\"/, 
+                `Final Prompt: "${finalPrompt}"`
+            ).replace(
+                /Base Prompt: \".*\"/, 
+                `Base Prompt: "${basePrompt}"`
+            );
+
             // Re-render current step if active
             if (state.currentStep === 1 || state.currentStep === 2) {
                 setStep(state.currentStep, false); // Update without animation
@@ -639,7 +762,20 @@
             
             // Update Data Display
             const display = document.getElementById('data-display');
-            display.innerHTML = stepData[step];
+            // Format JSON data for better display
+            try {
+                const rawContent = stepData[step].match(/\{[\s\S]*\}|\[[\s\S]*\]/g);
+                if (rawContent) {
+                    const formattedJson = JSON.stringify(JSON.parse(rawContent[0]), null, 2);
+                    display.innerHTML = stepData[step].replace(rawContent[0], formattedJson).replace(/\n/g, '<br>');
+                } else {
+                    display.innerHTML = stepData[step].replace(/\n/g, '<br>');
+                }
+            } catch (e) {
+                display.innerHTML = stepData[step].replace(/\n/g, '<br>');
+                console.error("Error parsing JSON for step display:", e);
+            }
+
             if (animate) {
                 display.classList.add('animate-pulse');
                 setTimeout(() => display.classList.remove('animate-pulse'), 300);
@@ -649,7 +785,7 @@
             const badge = document.getElementById('step-badge');
             badge.innerText = `Étape ${step}`;
             
-            const colors = ['bg-stone-500', 'bg-blue-500', 'bg-purple-500', 'bg-yellow-500', 'bg-orange-500', 'bg-green-500'];
+            const colors = ['bg-blue-600', 'bg-purple-600', 'bg-orange-600', 'bg-yellow-600', 'bg-red-600', 'bg-green-600'];
             badge.className = `px-2 py-0.5 rounded text-xs font-bold text-white ${colors[step-1]}`;
         }
         
@@ -662,7 +798,7 @@
                     datasets: [{
                         data: [89, 10, 1],
                         backgroundColor: [
-                            '#a8a29e', // stone-400
+                            '#475569', // Gray-600 (dark mode safe)
                             '#60a5fa', // blue-400
                             '#facc15'  // yellow-400
                         ],
@@ -677,6 +813,7 @@
                         legend: {
                             position: 'bottom',
                             labels: {
+                                color: '#E2E8F0', // Light color for dark theme
                                 usePointStyle: true,
                                 font: { family: 'Inter', size: 12 }
                             }
@@ -719,16 +856,16 @@
                 for (let i = 0; i < 5; i++) {
                     const rand = Math.random();
                     let type = 'Commun';
-                    let color = 'bg-stone-200 text-stone-600 border-stone-300';
+                    let color = 'bg-gray-700 text-gray-300 border-gray-600';
                     let icon = 'fa-circle';
 
                     if (rand < 0.01) {
                         type = 'Légendaire';
-                        color = 'bg-yellow-100 text-yellow-700 border-yellow-400';
+                        color = 'bg-yellow-900/50 text-yellow-400 border-yellow-500';
                         icon = 'fa-crown';
                     } else if (rand < 0.11) {
                         type = 'Rare';
-                        color = 'bg-blue-100 text-blue-700 border-blue-400';
+                        color = 'bg-blue-900/50 text-blue-400 border-blue-500';
                         icon = 'fa-gem';
                     }
 
@@ -740,7 +877,7 @@
                 pulledCards.forEach((card, index) => {
                     const html = `
                         <div class="animate-fadeInUp" style="animation-delay: ${index * 100}ms">
-                            <div class="h-40 rounded-xl border-2 ${card.color} flex flex-col items-center justify-center p-2 relative overflow-hidden shadow-sm transition-transform hover:scale-105">
+                            <div class="h-40 rounded-xl border-2 ${card.color} flex flex-col items-center justify-center p-2 relative overflow-hidden shadow-lg transition-transform hover:scale-105">
                                 <i class="fa-solid ${card.icon} text-3xl mb-2"></i>
                                 <span class="font-bold text-sm">${card.type}</span>
                                 <span class="text-xs opacity-75">#${card.id}</span>
